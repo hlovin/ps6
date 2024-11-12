@@ -1,0 +1,400 @@
+---
+title: "Problem Set 6 - Waze Shiny Dashboard"
+author: "Peter Ganong, Maggie Shi, and Andre Oviedo"
+date: today
+format: 
+  pdf:
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+include-before-body:
+  text: |
+    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+      showspaces = false,
+      showtabs = false,
+      breaksymbolleft={},
+      breaklines
+    }
+---
+1. **ps6:** Due Sat 23rd at 5:00PM Central. Worth 100 points (80 points from questions, 10 points for correct submission and 10 points for code style) + 10 extra credit. 
+
+We use (`*`) to indicate a problem that we think might be time consuming. 
+
+# Steps to submit (10 points on PS6) {-}
+
+1. "This submission is my work alone and complies with the 30538 integrity
+policy." Add your initials to indicate your agreement: \*\*\H\L\*\*
+2. "I have uploaded the names of anyone I worked with on the problem set **[here](https://docs.google.com/forms/d/185usrCREQaUbvAXpWhChkjghdGgmAZXA3lPWpXLLsts/edit)**"  \*\*\_\_\*\* (2 point)
+3. Late coins used this pset: \*\*\_\_\*\* Late coins left after submission: \*\*\_\_\*\*
+
+4. Before starting the problem set, make sure to read and agree to the terms of data usage for the Waze data [here](https://canvas.uchicago.edu/courses/59054/quizzes/130617).
+
+5. Knit your `ps6.qmd` as a pdf document and name it `ps6.pdf`.
+6. Submit your `ps6.qmd`, `ps6.pdf`, `requirements.txt`, and all created folders (we will create three Shiny apps so you will have at least three additional folders) to the gradescope repo assignment (5 points).
+7. Submit `ps6.pdf` and also link your Github repo via Gradescope (5 points)
+8. Tag your submission in Gradescope. For the Code Style part (10 points) please tag the whole correspondingsection for the code style rubric.
+
+*Notes: see the [Quarto documentation (link)](https://quarto.org/docs/authoring/figures.html) for directions on inserting images into your knitted document.*
+
+*IMPORTANT: For the App portion of the PS, in case you can not arrive to the expected functional dashboard we will need to take a look at your `app.py` file. You can use the following code chunk template to "import" and print the content of that file. Please, don't forget to also tag the corresponding code chunk as part of your submission!*
+
+```{python}
+#| echo: true
+#| eval: false
+
+def print_file_contents(file_path):
+    """Print contents of a file."""
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+            print("```python")
+            print(content)
+            print("```")
+    except FileNotFoundError:
+        print("```python")
+        print(f"Error: File '{file_path}' not found")
+        print("```")
+    except Exception as e:
+        print("```python") 
+        print(f"Error reading file: {e}")
+        print("```")
+
+print_file_contents("./top_alerts_map_byhour/app.py") # Change accordingly
+```
+
+```{python} 
+#| echo: false
+
+# Import required packages.
+import pandas as pd
+import altair as alt 
+import pandas as pd
+from datetime import date
+import numpy as np
+alt.data_transformers.disable_max_rows() 
+
+import json
+```
+
+# Background {-}
+
+## Data Download and Exploration (20 points){-} 
+
+1. 
+
+```{python}
+import os
+
+#set wd and load in data
+path = r"/Users/hallielovin/Documents/GitHub/ps6"
+
+waze_sample = r"waze_data_sample.csv"
+
+waze_sample_df = pd.read_csv(os.path.join(path, waze_sample))
+```
+
+```{python}
+#find the column names
+print(waze_sample_df.columns)
+```
+
+The variable names are: Unnamed:0, city, confidence, nthumbsup, street, uuid, country, tyoe, subtype, roadType, reliability, magvar, reportRating, ts, geo, and geoWKT. 
+
+```{python}
+#find the data types
+print(waze_sample_df.dtypes)
+```
+
+The data types are: 
+Unnamed: 0: Nominal 
+city: Nominal 
+confidence: Ordinal 
+nThumbsUp: Quantitative 
+street: Nominal 
+uuid: Nominal 
+country: Nominal 
+type: Nominal 
+Subtype: Nominal 
+roadType: Nominal 
+reliability: Ordinal
+magvar: Quantitative
+reportRating: Ordinal
+ts: Temporal
+
+2. 
+
+```{python}
+#load in the waze data 
+waze = r"waze_data.csv"
+
+waze_df = pd.read_csv(os.path.join(path, waze))
+```
+
+```{python}
+#pull out all the varaibles and make a list 
+variables = waze_df.columns
+
+#pull out all the null values in each column and make a list 
+null_counts = waze_df.isnull().sum().reset_index()
+null_counts.columns = ["variables", "null"]
+
+#pull out all the none null
+non_null_counts = waze_df.notnull().sum().reset_index()
+non_null_counts.columns = ["variables", "not null"]
+```
+
+```{python}
+#create a df with the count data
+null_data = pd.melt(null_counts.merge(non_null_counts, on="variables"),id_vars="variables", value_vars=["null", "not null"], var_name="status", value_name= "count")
+```
+
+```{python}
+#make a chart 
+alt.Chart(null_data).mark_bar().encode(
+    x=alt.X("variables:N"),
+    y=alt.Y("count:Q"),
+    color="status:N"
+).properties(
+  title = "Null Status in Data"
+)
+```
+nThumbsUp, street, and subtypes all have null values. nThumbsUp has the highest share of missing data. 
+
+3. 
+
+```{python}
+#print the unique values for type and subtype 
+print(waze_df["type"].unique())
+print(waze_df["subtype"].unique())
+```
+
+```{python}
+#find out how many types have a subtype that is NA
+na_subtype = waze_df[waze_df["subtype"].isna()]["type"].unique()
+
+len(na_subtype)
+```
+
+There are 4 types that have an NA for subtype.
+ 
+```{python}
+#print the combos of type and subtype 
+combo = waze_df[["type", "subtype"]].drop_duplicates()
+```
+
+Some sub subtypes that could exist are: 
+| Type | Subtype | Sub Subtype |
+| -----|---------| ------------ |
+| ACCIDENT | ACCIDENT | MAJOR |
+| ACCIDENT | ACCIDENT | MINOR |
+| HAZARD | HAZARD_ON_ROAD | CAR_STOPPED |
+| HAZARD | HAZARD_ON_ROAD | CONSTRUCTION |
+| HAZARD | HAZARD_ON_ROAD | EMERGENCY_VEHICLE |
+| HAZARD | HAZARD_ON_ROAD | ICE |
+| HAZARD | HAZARD_ON_ROAD | OBJECT |
+| HAZARD | HAZARD_ON_ROAD | POT_HOLE |
+| HAZARD | HAZARD_ON_ROAD | LANE_CLOSED |
+| HAZARD | HAZARD_ON_ROAD | TRAFFIC_LIGHT_FAULT |
+| HAZARD | HAZARD_ON_ROAD | ROAD_KILL |
+| HAZARD | HAZARD_ON_SHOULDER | CAR_STOPPED |
+| HAZARD | HAZARD_ON_SHOULDER | ANIMALS |
+| HAZARD | HAZARD_ON_SHOULDER | MISSING_SIGN |
+| HAZARD | HAZARD_WEATHER | FLOOD |
+| HAZARD | HAZARD_WEATHER | FOG |
+| HAZARD | HAZARD_WEATHER | HEAVY_SNOW |
+| HAZARD | HAZARD_WEATHER | HAIL |
+| JAM | JAM_TRAFFIC | HEAVY |
+| JAM | JAM_TRAFFIC | MODERATE |
+| JAM | JAM_TRAFFIC | STAND_STILL |
+| JAM | JAM_TRAFFIC | LIGHT |
+| ROAD_CLOSED | ROAD_CLOSED | HAZARD |
+| ROAD_CLOSED | ROAD_CLOSED | CONSTRUCTION |
+| ROAD_CLOSED | ROAD_CLOSED | EVENT |
+
+I think that we should keep the NA subtypes. These are important because just because there is no classified subtype does not mean that there is an event on the road that we should note. It just may be that the event was not fully classified, but that makes it no less important to our data. 
+
+4. 
+
+```{python}
+#make a new df
+update_waze = pd.DataFrame({
+  "type": combo["type"],
+  "subtype": combo["subtype"], 
+  "updated_type": combo["type"],
+  "updated_subtype": ["UNCLASSIFIED", "UNCLASSIFIED", "UNCLASSIFED", "UNCLASSIFIED", "ACCIDENT", "ACCIDENT", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD","HAZARD_ON_ROAD","HAZARD_ON_ROAD","HAZARD_ON_ROAD","HAZARD_ON_SHOULDER", "HAZARD_ON_SHOULDER", "HAZARD_WEATHER", "HAZARD_WEATHER", "JAM_TRAFFIC", "JAM_TRAFFIC", "JAM_TRAFFIC", "ROAD_CLOSED", "HAZARD_ON_ROAD", "HAZARD_WEATHER", "ROAD_CLOSED", "HAZARD_ON_ROAD", "HAZARD_ON_SHOULDER", "HAZARD_ON_SHOULDER", "JAM_TRAFFIC", "HAZARD_WEATHER", "ROAD_CLOSED", "HAZARD_WEATHER"],
+  "updated_subsubtype": ["UNCLASSIFED","UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "MAJOR", "MINOR", "UNCLASSIFED", "CAR_STOPPED", "CONSTRUCTION", "EMERGENCY", "ICE", "OBJECT", "POT_HOLE", "TRAFFIC_LIGHT_FAULT", "UNCLASSIFED", "CAR_STOPPED", "UNCLASSIFED", "FLOOD", "HEAVY", "MODERATE", "STAND_STILL", "EVENT", "LANE_CLOSED", "FOG", "CONSTRUCTION", "ROAD_KILL", "ANIMALS", "MISSING_SIGN","LIGHT", "HEAVY_SNOW", "HAZARD", "HAIL"]
+})
+```
+
+```{python}
+#merge the crosswalk with the original data 
+waze_df= waze_df.merge(update_waze, on=["type", "subtype"], how="left")
+```
+
+1. 
+```{python}
+
+```
+
+2. 
+
+```{python}
+
+```
+
+3. 
+
+```{python}
+
+```
+
+4. 
+
+```{python}
+
+```
+
+
+# App #1: Top Location by Alert Type Dashboard (30 points){-}
+
+1. 
+
+a. 
+```{python}
+
+```
+
+b. 
+```{python}
+
+```
+
+
+c. 
+```{python}
+
+```
+
+d. 
+```{python}
+
+```
+
+3. 
+    
+a. 
+
+```{python}
+
+```
+    
+
+b. 
+```{python}
+# MODIFY ACCORDINGLY
+file_path = "./top_alerts_map/chicago-boundaries.geojson"
+#----
+
+with open(file_path) as f:
+    chicago_geojson = json.load(f)
+
+geo_data = alt.Data(values=chicago_geojson["features"])
+
+```
+
+4. 
+
+```{python}
+
+```
+
+5. 
+
+a. 
+
+```{python}
+
+```
+
+b. 
+```{python}
+
+```
+
+c. 
+```{python}
+
+```
+
+d. 
+```{python}
+
+```
+
+e. 
+
+# App #2: Top Location by Alert Type and Hour Dashboard (20 points) {-}
+
+1. 
+
+a. 
+
+
+    
+b. 
+```{python}
+
+```
+
+c.
+
+```{python}
+
+```
+    
+
+2.
+
+a. 
+
+
+
+b. 
+
+
+c. 
+
+
+# App #3: Top Location by Alert Type and Hour Dashboard (20 points){-}
+
+1. 
+
+
+a. 
+
+b. 
+
+```{python}
+
+```
+
+2. 
+
+a. 
+
+
+b. 
+    
+3. 
+
+a. 
+    
+
+b. 
+
+
+c. 
+
+
+d.
