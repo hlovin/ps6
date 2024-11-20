@@ -121,6 +121,8 @@ reliability: Ordinal
 magvar: Quantitative
 reportRating: Ordinal
 ts: Temporal
+geo: Quantitative
+geoWKT: Quantitative
 
 2. 
 
@@ -159,6 +161,7 @@ alt.Chart(null_data).mark_bar().encode(
   title = "Null Status in Data"
 )
 ```
+
 nThumbsUp, street, and subtypes all have null values. nThumbsUp has the highest share of missing data. 
 
 3. 
@@ -186,33 +189,33 @@ combo = waze_df[["type", "subtype"]].drop_duplicates()
 Some sub subtypes that could exist are: 
 | Type | Subtype | Sub Subtype |
 | -----|---------| ------------ |
-| ACCIDENT | ACCIDENT | MAJOR |
-| ACCIDENT | ACCIDENT | MINOR |
-| HAZARD | HAZARD_ON_ROAD | CAR_STOPPED |
-| HAZARD | HAZARD_ON_ROAD | CONSTRUCTION |
-| HAZARD | HAZARD_ON_ROAD | EMERGENCY_VEHICLE |
-| HAZARD | HAZARD_ON_ROAD | ICE |
-| HAZARD | HAZARD_ON_ROAD | OBJECT |
-| HAZARD | HAZARD_ON_ROAD | POT_HOLE |
-| HAZARD | HAZARD_ON_ROAD | LANE_CLOSED |
-| HAZARD | HAZARD_ON_ROAD | TRAFFIC_LIGHT_FAULT |
-| HAZARD | HAZARD_ON_ROAD | ROAD_KILL |
-| HAZARD | HAZARD_ON_SHOULDER | CAR_STOPPED |
-| HAZARD | HAZARD_ON_SHOULDER | ANIMALS |
-| HAZARD | HAZARD_ON_SHOULDER | MISSING_SIGN |
-| HAZARD | HAZARD_WEATHER | FLOOD |
-| HAZARD | HAZARD_WEATHER | FOG |
-| HAZARD | HAZARD_WEATHER | HEAVY_SNOW |
-| HAZARD | HAZARD_WEATHER | HAIL |
-| JAM | JAM_TRAFFIC | HEAVY |
-| JAM | JAM_TRAFFIC | MODERATE |
-| JAM | JAM_TRAFFIC | STAND_STILL |
-| JAM | JAM_TRAFFIC | LIGHT |
-| ROAD_CLOSED | ROAD_CLOSED | HAZARD |
-| ROAD_CLOSED | ROAD_CLOSED | CONSTRUCTION |
-| ROAD_CLOSED | ROAD_CLOSED | EVENT |
+| ACCIDENT | MAJOR | UNCLASSIFIED |
+| ACCIDENT | MINOR | UNCLASSIFIED |
+| HAZARD | ROAD | CAR_STOPPED |
+| HAZARD | ROAD | CONSTRUCTION |
+| HAZARD | ROAD | EMERGENCY_VEHICLE |
+| HAZARD | ROAD | ICE |
+| HAZARD | ROAD | OBJECT |
+| HAZARD | ROAD | POT_HOLE |
+| HAZARD | ROAD | LANE_CLOSED |
+| HAZARD | ROAD | TRAFFIC_LIGHT_FAULT |
+| HAZARD | ROAD | ROAD_KILL |
+| HAZARD | SHOULDER | CAR_STOPPED |
+| HAZARD | SHOULDER | ANIMALS |
+| HAZARD | SHOULDER | MISSING_SIGN |
+| HAZARD | WEATHER | FLOOD |
+| HAZARD | WEATHER | FOG |
+| HAZARD | WEATHER | HEAVY_SNOW |
+| HAZARD | WEATHER | HAIL |
+| JAM | HEAVY | UNCLASSIFIED |
+| JAM | MODERATE | UNCLASSIFED |
+| JAM | STAND_STILL | UNCLASSIFED |
+| JAM | LIGHT | UNCLASSIFED |
+| ROAD_CLOSED | HAZARD | UNCLASSIFED |
+| ROAD_CLOSED | CONSTRUCTION | UNCLASSIFIED |
+| ROAD_CLOSED | EVENT | UNCLASSIFED |
 
-I think that we should keep the NA subtypes. These are important because just because there is no classified subtype does not mean that there is an event on the road that we should note. It just may be that the event was not fully classified, but that makes it no less important to our data. 
+I think that we should keep the NA subtypes. These are important because just because there is no classified sub-subtype does not mean that there is an event on the road that we should note. It just may be that the event was not fully classified, but that makes it no less important to our data. 
 
 4. 
 
@@ -222,39 +225,28 @@ update_waze = pd.DataFrame({
   "type": combo["type"],
   "subtype": combo["subtype"], 
   "updated_type": combo["type"],
-  "updated_subtype": ["UNCLASSIFIED", "UNCLASSIFIED", "UNCLASSIFED", "UNCLASSIFIED", "ACCIDENT", "ACCIDENT", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD", "HAZARD_ON_ROAD","HAZARD_ON_ROAD","HAZARD_ON_ROAD","HAZARD_ON_ROAD","HAZARD_ON_SHOULDER", "HAZARD_ON_SHOULDER", "HAZARD_WEATHER", "HAZARD_WEATHER", "JAM_TRAFFIC", "JAM_TRAFFIC", "JAM_TRAFFIC", "ROAD_CLOSED", "HAZARD_ON_ROAD", "HAZARD_WEATHER", "ROAD_CLOSED", "HAZARD_ON_ROAD", "HAZARD_ON_SHOULDER", "HAZARD_ON_SHOULDER", "JAM_TRAFFIC", "HAZARD_WEATHER", "ROAD_CLOSED", "HAZARD_WEATHER"],
-  "updated_subsubtype": ["UNCLASSIFED","UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "MAJOR", "MINOR", "UNCLASSIFED", "CAR_STOPPED", "CONSTRUCTION", "EMERGENCY", "ICE", "OBJECT", "POT_HOLE", "TRAFFIC_LIGHT_FAULT", "UNCLASSIFED", "CAR_STOPPED", "UNCLASSIFED", "FLOOD", "HEAVY", "MODERATE", "STAND_STILL", "EVENT", "LANE_CLOSED", "FOG", "CONSTRUCTION", "ROAD_KILL", "ANIMALS", "MISSING_SIGN","LIGHT", "HEAVY_SNOW", "HAZARD", "HAIL"]
+  "updated_subtype": ["UNCLASSIFIED", "UNCLASSIFIED", "UNCLASSIFED", "UNCLASSIFIED", "MAJOR", "MINOR", "ON_ROAD", "ON_ROAD", "ON_ROAD", "ON_ROAD", "ON_ROAD","ON_ROAD","ON_ROAD","ON_ROAD","ON_SHOULDER", "ON_SHOULDER", "WEATHER", "WEATHER", "HEAVY", "MODERATE", "STAND_STILL", "EVENT", "ON_ROAD", "WEATHER", "CONSTRUCTION", "ON_ROAD", "ON_SHOULDER", "ON_SHOULDER", "LIGHT", "WEATHER", "HAZARD", "WEATHER"],
+  "updated_subsubtype": ["UNCLASSIFED","UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "CAR_STOPPED", "CONSTRUCTION", "EMERGENCY", "ICE", "OBJECT", "POT_HOLE", "TRAFFIC_LIGHT_FAULT", "UNCLASSIFED", "CAR_STOPPED", "UNCLASSIFED", "FLOOD", "UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "UNCLASSIFED", "LANE_CLOSED", "FOG", "CONSTRUCTION", "ROAD_KILL", "ANIMALS", "MISSING_SIGN","UNCLASSIFED", "HEAVY_SNOW", "HAZARD", "HAIL"]
 })
 ```
+
 
 ```{python}
 #merge the crosswalk with the original data 
 waze_df= waze_df.merge(update_waze, on=["type", "subtype"], how="left")
 ```
 
-1. 
 ```{python}
-
+#convert any NA's to UNCLASSIFIED
+waze_df[["updated_type", "updated_subtype", "updated_subsubtype"]] = waze_df[["updated_type", "updated_subtype", "updated_subsubtype"]].fillna("UNCLASSIFIED")
 ```
 
-2. 
-
 ```{python}
-
+#count the number of rows where accident is unclassified
+waze_df[(waze_df["updated_type"] == "ACCIDENT") & (waze_df["updated_subtype"] == "UNCLASSIFIED")].shape[0]
 ```
 
-3. 
-
-```{python}
-
-```
-
-4. 
-
-```{python}
-
-```
-
+There are 24,359 instance where accident has an unclassifed subtype.
 
 # App #1: Top Location by Alert Type Dashboard (30 points){-}
 
@@ -262,127 +254,334 @@ waze_df= waze_df.merge(update_waze, on=["type", "subtype"], how="left")
 
 a. 
 ```{python}
-
+import re
 ```
+
+```{python}
+#make the regex pattern
+pattern = r"POINT\(([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+)\)"
+
+# Apply the regex to each element in the geo column
+waze_df[["longitude", "latitude"]] = waze_df["geo"].apply(
+    lambda x: pd.Series(re.search(pattern, x).groups() if re.search(pattern, x) else (None, None))
+).astype(float)
+```
+
+I used Chatgpt to help me with this. This was my prompt: use regex to extract the latitude and longitude from a variable that is written in wkt with the structure POINT(latitude longitude)
 
 b. 
 ```{python}
-
+#Change the number of decimal places for latitude and longitude 
+waze_df[["longitude","latitude"]]= waze_df[["longitude", "latitude"]].round(2)
 ```
 
+```{python}
+#find the binned combinations that have the highest number of observations in the dataset 
+lat_lon_combo = waze_df[["longitude", "latitude"]].value_counts().reset_index(name="count")
+```
+
+The combination of (-87.65 41.88) has the largest number of observations in the dataset with 21,325.
 
 c. 
 ```{python}
-
+#create a new column in the waze_df that shows the type and subtype for selection 
+waze_df["type_subtype"] = waze_df["updated_type"] + " - " + waze_df["updated_subtype"]
 ```
 
-d. 
 ```{python}
+# Group the df
+grouped = waze_df.groupby(["type_subtype", "latitude", "longitude"]).size().reset_index(name="count")
 
+# Sort values 
+grouped_sorted = grouped.sort_values(by=["type_subtype", "count"], ascending=[True, False])
+
+# Get top 10 latitude-longitude pairs for each 'type_subtype'
+top_alerts_map = grouped_sorted.groupby("type_subtype").head(10)
+```
+
+```{python}
+len(top_alerts_map)
+```
+
+```{python}
+#save this data as a csv called top_alerts_map 
+output_dir = "top_alerts_map"
+
+top_alerts_map.to_csv(os.path.join(output_dir, "top_alerts_map.csv"), index=False)
+```
+
+
+The level of aggregation for this data is to the point of looking at latitude and longitude within a certain combination of type and subtype. This dataframe has 155 observations
+
+2.  
+```{python}
+#subset out heavy traffic jams
+heavy_traffic = waze_df[(waze_df["updated_type"] == "JAM") & (waze_df["updated_subtype"] == "HEAVY")]
+```
+
+```{python}
+#find the top 10 bins with the highest number of alerts for this type and subtype 
+heavy_traffic_latlon = heavy_traffic[["longitude", "latitude"]].value_counts().reset_index(name="count").sort_values(by = "count", ascending = False).head(10)
+```
+
+```{python}
+#create a scatter plot 
+alt.Chart(heavy_traffic_latlon).mark_circle().encode(
+  x = alt.X("longitude:Q", scale=alt.Scale(domain = [-87.95, -87.52])),
+  y = alt.Y("latitude:Q", scale=alt.Scale(domain=[41.6, 42.05])),
+  size = alt.Size("count:Q", legend=alt.Legend(title="Number of Alerts"))).properties(
+  title = "Ten Highest Number of Heavy Traffic Jams Latitude and Longitude")
 ```
 
 3. 
     
 a. 
-
 ```{python}
-
+# load in the neighborhood data
+file_path = "./top_alerts_map/Boundaries - Neighborhoods.geojson"
 ```
     
 
 b. 
 ```{python}
-# MODIFY ACCORDINGLY
-file_path = "./top_alerts_map/chicago-boundaries.geojson"
-#----
-
 with open(file_path) as f:
-    chicago_geojson = json.load(f)
+  chicago_geojson = json.load(f)
 
 geo_data = alt.Data(values=chicago_geojson["features"])
-
 ```
 
 4. 
+```{python}
+#load in the map of the chicago neighborhoods
+chi_map = alt.Chart(geo_data).mark_geoshape(
+    fillOpacity=0,  
+    stroke="black"  
+).encode().project(
+    type="identity",
+    reflectY=True
+).properties(
+  width = 600, 
+  height = 600
+)
+```
 
 ```{python}
+#edit the scatter plot made before with the new axis
+heavy_traffic_chart = alt.Chart(heavy_traffic_latlon).mark_circle().encode(
+  x = alt.X("longitude:Q", scale=alt.Scale(domain = [-87.95, -87.52])),
+  y = alt.Y("latitude:Q", scale=alt.Scale(domain=[41.6, 42.05])),
+  size = alt.Size("count:Q", legend=alt.Legend(title="Number of Alerts"))).properties(
+  title = "Ten Highest Number of Heavy Traffic Jams")
+```
 
+```{python}
+#layer the scatter and chicago map 
+chi_map + heavy_traffic_chart
 ```
 
 5. 
-
 a. 
-
 ```{python}
-
+choices = waze_df["type_subtype"].unique()
 ```
+
+![Dropdown Image](dropdown.png)
+
+There are 16 type/subtype combinations in my dropdown menu.
 
 b. 
-```{python}
-
-```
+![Jam-Heavy Image](jam_heavy.png)
 
 c. 
-```{python}
+![Road Closed for Event](closed_event.png)
 
-```
+Road closured due to events are the most common in the northern part of Chicago.
 
 d. 
-```{python}
+Question: Are weather hazards pretty dispered across the city or concentrated in a particular area? 
 
-```
+Answer: Weather hazards are pretty dispersed throughout the city. 
+
+![Weather Hazard Disperal](weather_hazard.png)
 
 e. 
+Another column that could be added to the dashboard to enhance our analysis could be the subsubtype column. This could allow us to look into specific kinds of alerts that may not be fully encompassed by just the type and subtype.
 
 # App #2: Top Location by Alert Type and Hour Dashboard (20 points) {-}
 
 1. 
 
 a. 
-
+No, I do not think this would be a good idea. There are so many time stamps and very few that would overlap to be able to make a group. The data would likely remain unchanged if we did this. 
 
     
 b. 
-```{python}
 
+```{python}
+#convert timestamp to dt 
+waze_df["ts"] = pd.to_datetime(waze_df["ts"])
 ```
 
+```{python}
+#create a new column called hour taking the hour from the ts column 
+waze_df["hour"] = waze_df["ts"].dt.hour
+```
+
+```{python}
+#plot the top ten locations by hour 
+# Group the df
+hour = waze_df.groupby(["hour", "type_subtype", "latitude", "longitude"]).size().reset_index(name="count")
+
+# Sort values 
+hour_sorted = hour.sort_values(by=["hour", "count"], ascending=[True, False])
+
+# Get top 10 latitude-longitude pairs for each 'type_subtype'
+top_alerts_map_byhour= hour_sorted.groupby("hour").head(10)
+```
+
+```{python}
+len(top_alerts_map_byhour)
+```
+
+```{python}
+#save this data as a csv called top_alerts_map 
+output_dir2 = "top_alerts_map_byhour"
+
+top_alerts_map_byhour.to_csv(os.path.join(output_dir2, "top_alerts_map_byhour.csv"), index=False)
+```
+
+This dataset has 240 rows. 
 c.
 
 ```{python}
-
+#subset out the heavy traffic from the big plot
+heavy_traffic_hour = waze_df[(waze_df["type_subtype"] == "JAM - HEAVY")]
 ```
-    
+
+```{python}
+#find the top ten locations for heavy traffic jams by hour for hour 5, 10, and 15
+heavy_traffic_hour = heavy_traffic_hour.groupby(["hour", "type_subtype", "latitude", "longitude"]).size().reset_index(name="count").sort_values(by=["hour", "count"], ascending = [True, False])
+
+heavy_traffic_hour = heavy_traffic_hour[heavy_traffic_hour["hour"].isin([5, 10, 15])]
+```
+
+```{python}
+heavy_traffic_hour = heavy_traffic_hour.groupby("hour").head(10).reset_index(drop=True)
+```
+
+```{python}
+#load in the map of the chicago neighborhoods
+chi_map = alt.Chart(geo_data).mark_geoshape(
+    fillOpacity=0,  
+    stroke="black"  
+).encode().project(
+    type="identity",
+    reflectY=True
+).properties(
+  width = 600, 
+  height = 600
+)
+```
+
+```{python}
+#add in the scatter plot
+heavy_traffic_hour_plot = alt.Chart(heavy_traffic_hour).mark_circle().encode(
+  x = alt.X("longitude:Q", scale=alt.Scale(domain = [-87.95, -87.52])),
+  y = alt.Y("latitude:Q", scale=alt.Scale(domain=[41.6, 42.05])),
+  size = alt.Size("count:Q", legend=alt.Legend(title="Number of Alerts")), 
+  color = alt.Color("hour:N", legend = alt.Legend(title = "Hour"))).properties(
+  title = "Ten Highest Number of Heavy Traffic Jams at 5AM, 10AM, and 3PM")
+```
+
+```{python}
+#layer the scatter and chicago map 
+chi_map + heavy_traffic_hour_plot
+```
 
 2.
 
 a. 
-
-
+![UI](ui.png)
 
 b. 
+![5am Plot](5.png)
 
+![10am Plot](10.png)
+
+![3pm Plot](3.png)
 
 c. 
+Road construction seems to be done more in the morning hours, however in the evening hours alerts seem to be more concentrated in specific areas. 
 
+![7am construction on roads](morning.png)
+
+![6pm construction on roads](evening.png)
 
 # App #3: Top Location by Alert Type and Hour Dashboard (20 points){-}
 
 1. 
 
-
 a. 
+Yes, it will make our data much easier to use in the app if it is already collapsed by range.
 
 b. 
 
 ```{python}
+hour_bins = [0, 6, 9, 12, 15, 18, 21, 24] 
+hour_labels = ["0-6", "6-9", "9-12", "12:00-15:00", "15:00-18:00", "18:00-21:00", "21:00-00:00"]
 
+# Create a new column 'hour_range' that groups the hours into the defined ranges
+waze_df["hour"] = pd.cut(waze_df["hour"], bins=hour_bins, labels=hour_labels, right=False)
 ```
+
+```{python}
+#group the hour range and number of alerts together
+slider_df = waze_df.groupby(["hour", "type_subtype", "latitude", "longitude"]).size().reset_index(name="count")
+
+# Sort values 
+slider_sorted = slider_df.sort_values(by=["hour", "count"], ascending=[True, False])
+
+# Get top 10 latitude-longitude pairs for each 'type_subtype'
+top_alerts_map_byhour_sliderrange= slider_sorted.groupby("hour").head(10)
+```
+
+
+```{python}
+#save this data as a csv 
+output_dir3 = "top_alerts_map_byhour_sliderrange"
+
+top_alerts_map_byhour_sliderrange.to_csv(os.path.join(output_dir3, "top_alerts_map_byhour_sliderrange.csv"), index=False)
+```
+
+```{python}
+#create the df for the heavy traffic jams between 6 and 9 am 
+morn_range = waze_df[waze_df["hour"] == "06:00-09:00"]
+```
+
+```{python}
+#find the 10 highest number of alerts per area
+morn_range = heavy_traffic_hour.groupby(["type_subtype", "latitude", "longitude"]).size().reset_index(name="count").sort_values(by=["count"], ascending = [False]).head(10)
+```
+
+```{python}
+#create the plot
+plot_6_9 = alt.Chart(morn_range).mark_circle().encode(
+  x = alt.X("longitude:Q", scale=alt.Scale(domain = [-87.95, -87.52])),
+  y = alt.Y("latitude:Q", scale=alt.Scale(domain=[41.6, 42.05])),
+  size = alt.Size("count:Q", legend=alt.Legend(title="Number of Alerts"))).properties(
+  title = "Ten Highest Number of Heavy Traffic Jams Between 6AM and 9AM")
+```
+
+```{python}
+#layer the scatter and chicago map 
+chi_map + plot_6_9
+```
+
 
 2. 
 
 a. 
-
+![Slider Range UI and Plot](2aui.png)
 
 b. 
     
