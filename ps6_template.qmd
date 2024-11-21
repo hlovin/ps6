@@ -527,35 +527,10 @@ Yes, it will make our data much easier to use in the app if it is already collap
 b. 
 
 ```{python}
-hour_bins = [0, 6, 9, 12, 15, 18, 21, 24] 
-hour_labels = ["0-6", "6-9", "9-12", "12:00-15:00", "15:00-18:00", "18:00-21:00", "21:00-00:00"]
-
-# Create a new column 'hour_range' that groups the hours into the defined ranges
-waze_df["hour"] = pd.cut(waze_df["hour"], bins=hour_bins, labels=hour_labels, right=False)
-```
-
-```{python}
-#group the hour range and number of alerts together
-slider_df = waze_df.groupby(["hour", "type_subtype", "latitude", "longitude"]).size().reset_index(name="count")
-
-# Sort values 
-slider_sorted = slider_df.sort_values(by=["hour", "count"], ascending=[True, False])
-
-# Get top 10 latitude-longitude pairs for each 'type_subtype'
-top_alerts_map_byhour_sliderrange= slider_sorted.groupby("hour").head(10)
-```
-
-
-```{python}
-#save this data as a csv 
-output_dir3 = "top_alerts_map_byhour_sliderrange"
-
-top_alerts_map_byhour_sliderrange.to_csv(os.path.join(output_dir3, "top_alerts_map_byhour_sliderrange.csv"), index=False)
-```
-
-```{python}
-#create the df for the heavy traffic jams between 6 and 9 am 
-morn_range = waze_df[waze_df["hour"] == "06:00-09:00"]
+#use the top alerts map df made before and filter out the hours 6,7,8, and 9
+morn_range = top_alerts_map_byhour[
+  top_alerts_map_byhour["hour"].isin([6, 7, 8, 9])
+]
 ```
 
 ```{python}
@@ -577,14 +552,14 @@ plot_6_9 = alt.Chart(morn_range).mark_circle().encode(
 chi_map + plot_6_9
 ```
 
-
 2. 
 
 a. 
 ![Slider Range UI and Plot](2aui.png)
 
 b. 
-    
+![Slider Range 6-9AM Plot](heavyjamdash.png)
+
 3. 
 
 a. 
