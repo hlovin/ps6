@@ -10,8 +10,10 @@ app_ui = ui.page_fluid(
                              "HAZARD - UNCLASSIFIED", "ACCIDENT - MAJOR", "ACCIDENT - MINOR", "HAZARD - ON_ROAD", 
                              "HAZARD - ON_SHOULDER", "HAZARD - WEATHER", "JAM - HEAVY", "JAM - MODERATE", "JAM - STAND_STILL", 
                              "ROAD_CLOSED - EVENT", "ROAD_CLOSED - CONSTRUCTION", "JAM - LIGHT", "ROAD_CLOSED - HAZARD"]),
-    ui.input_slider(id="hour", label="Select hour range:", min=0, max=23, value=[6,9], step=1),
-    output_widget("map")
+    ui.input_slider(id="hour", label="Select hour range:", min=0, max=23, value = [0.,23], step=1),
+    ui.input_switch("switch", "Toggle to switch to range of hours", False),
+    output_widget("map"),
+    ui.output_ui("hour_ui")
 )
 
 def server (input, output, session):
@@ -22,11 +24,17 @@ def server (input, output, session):
   @reactive.calc
   def grouped(): 
         top_alerts_map_byhour = data()
-        start_hour, end_hour = input.hour() 
-        filtered = top_alerts_map_byhour[(top_alerts_map_byhour["hour"] >= start_hour) & (top_alerts_map_byhour["hour"] <= end_hour)]
-        grouped_data = filtered.groupby(["hour", "type_subtype", "latitude", "longitude"]).size().reset_index(name="count")
-        sorted_data = grouped_data.sort_values(by=["hour", "count"], ascending=[True, False])
-        top_10_per_hour = sorted_data.head(10) 
+        hour_input = input.hour()
+        if isinstance(hour_input, list): 
+            start_hour, end_hour = hour_input
+            filtered = top_alerts_map_byhour[(top_alerts_map_byhour_byhour["hour"] >= start_hour) & 
+                                             (top_alerts_map_byhour_byhour["hour"] <= end_hour)]
+        else: 
+            start_hour = end_hour = hour_input
+            filtered = top_alerts_map_byhour[top_alerts_map_byhour["type_subtype"] == input.type_subtype()]
+        grouped_data = filtered.groupby(["type_subtype", "latitude", "longitude"]).size().reset_index(name="count")
+        sorted_data = grouped_data.sort_values(by="count", ascending=False)
+        top_10_per_hour = sorted_data.head(10)
         return top_10_per_hour
     
   @render.table()
@@ -65,7 +73,21 @@ def server (input, output, session):
     combined_chart = chi_map + plot3
 
     return combined_chart  
-  
+
+@output_ui("hour_ui")
+def toggle_hour_ui():
+        # Show or hide hour selection based on switch toggle
+    if input.switch():
+        return ui.input_slider(id="hour", label="Select hour range:", min=0, max=23, value=[0., 23], step=1)
+    else:
+            # Set the slider to allow only a single hour when switch is off
+        return ui.input_slider(id="hour", label="Select hour:", min=0, max=23, value=0, step=1)
+
+@reactive.Effect
+def _():
+        # Whenever the switch changes, update the visibility of the hour input slider
+    pass
+
 app = App(app_ui, server)
 
 
